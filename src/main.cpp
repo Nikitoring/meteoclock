@@ -9,6 +9,7 @@
 #include <Adafruit_BMP280.h>
 Adafruit_BMP280 bmp;
 
+#include <Wire.h>
 #include <LiquidCrystal_I2C.h>              // подключаем библиотеку для QAPASS 16x2
 LiquidCrystal_I2C lcd(DISPLAY_ADDR, 16, 2); // присваиваем имя LCD для дисплея
 
@@ -50,7 +51,8 @@ void printDateTime(const RtcDateTime &dt)
              dt.Second());
   Serial.print(F("Date/Time: "));
   Serial.print(datestring);
-  lcd.print(dt.Day());
+  lcd.setCursor(0, 2);
+  lcd.print(datestring);
 }
 
 void setup()
@@ -66,7 +68,18 @@ void setup()
   lcd.print(F("RTC... "));
   Serial.print(F("RTC... "));
   Rtc.Begin();
+  bmp.begin();
   RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
+  RtcDateTime now = Rtc.GetDateTime();
+  if (!Rtc.IsDateTimeValid())
+  {
+    // Common Causes:
+    //    1) first time you ran and the device wasn't running yet
+    //    2) the battery on the device is low or even missing
+
+    Serial.println("RTC lost confidence in the DateTime!");
+    Rtc.SetDateTime(compiled);
+  }
   delay(50);
   if (!Rtc.GetIsRunning())
   {
@@ -90,12 +103,11 @@ void setup()
   lcd.print(F("BMP280... "));
   Serial.print(F("BMP280... "));
   delay(50);
-  if (!bmp.begin(BMP280_ADDRESS - 1))
+  if (!bmp.begin())
   {
     Serial.println(F("Could not find a valid BMP280 sensor, check wiring!"));
     lcd.print(F("ERROR"));
     Serial.println(F("ERROR"));
-    status = false;
     delay(2000);
   }
   else
@@ -125,6 +137,7 @@ void setup()
 
 void loop()
 {
+  // lcd.clear();
   lcd.setCursor(0, 1);
   readSensors();
   Serial.print("Temperature: ");
@@ -137,8 +150,14 @@ void loop()
   Serial.println(dispPres); // отправляем значение давления на монитор
 
   Serial.println(" "); // пустая строка
-  RtcDateTime now = Rtc.GetDateTime();
   Serial.println("Date/Time: ");
+  RtcDateTime now = Rtc.GetDateTime();
   printDateTime(now);
+  if (!now.IsValid())
+  {
+    Serial.println("RTC lost confidence in the DateTime!");
+  }
+
   delay(10000);
 }
+W
