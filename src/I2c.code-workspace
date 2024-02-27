@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "I2c",
+			"path": ".."
+		},
+		{
+			"name": "arduino",
+			"path": "../../../../../projects/arduino"
+		}
+	],
+	"settings": {}
+}
